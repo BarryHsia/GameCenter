@@ -35,7 +35,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.kgzn.gamecenter.ui.GcAppState
 import com.kgzn.gamecenter.ui.LocalNavController
 import com.kgzn.gamecenter.ui.about.navigateToAbout
@@ -60,13 +60,7 @@ fun HomeScreen(
 ) {
 
     val context = LocalContext.current
-    val homeViewModel: HomeViewModel = viewModel {
-        HomeViewModel(
-            appState.appApi,
-            appState,
-            context = context
-        )
-    }
+    val homeViewModel: HomeViewModel = hiltViewModel()
     val contentConfigs by homeViewModel.contentConfigs.collectAsState()
     val loading by homeViewModel.loading.collectAsState()
     val pagerState by homeViewModel.pagerState.collectAsState()
@@ -85,6 +79,11 @@ fun HomeScreen(
     LaunchedEffect(isOffline) {
         if (!isOffline) {
             homeViewModel.fetchContentConfigs()
+        }
+    }
+    LaunchedEffect(Unit) {
+        homeViewModel.snackbarMessage.collect { message ->
+            appState.snackbarHostState.showSnackbar(message)
         }
     }
     BackHandler(barExpand) {

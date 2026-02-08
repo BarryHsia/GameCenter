@@ -29,12 +29,12 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.tv.material3.Icon
 import androidx.tv.material3.Text
 import com.kgzn.gamecenter.R
 import com.kgzn.gamecenter.designsystem.component.GcTopAppBar
 import com.kgzn.gamecenter.designsystem.theme.GcTextStyle
-import com.kgzn.gamecenter.feature.installer.InstallManager
 import com.kgzn.gamecenter.ui.downloader.component.EmptyBackground
 import com.kgzn.gamecenter.ui.uninstaller.component.UninstallDialog
 import com.kgzn.gamecenter.ui.uninstaller.component.UninstallerItem
@@ -45,9 +45,10 @@ const val TAG = "UninstallerScreen"
 
 @SuppressLint("QueryPermissionsNeeded")
 @Composable
-fun UninstallerScreen(
-    installManager: InstallManager,
-) {
+fun UninstallerScreen() {
+
+    val viewModel: UninstallerViewModel = hiltViewModel()
+    val installManager = viewModel.installManager
 
     val context = LocalContext.current
     val pm = context.packageManager

@@ -33,12 +33,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import androidx.tv.material3.Text
 import com.kgzn.gamecenter.R
 import com.kgzn.gamecenter.designsystem.theme.GcTextStyle
-import com.kgzn.gamecenter.ui.GcAppState
 import com.kgzn.gamecenter.ui.gamedetails.component.ButtonBar
 import com.kgzn.gamecenter.ui.gamedetails.component.DescDialog
 import com.kgzn.gamecenter.ui.gamedetails.component.GameDetailsBackground
@@ -47,31 +47,17 @@ import com.kgzn.gamecenter.ui.gamedetails.component.InfoSector
 import com.kgzn.gamecenter.ui.gamedetails.component.RelativeResourceSector
 import com.kgzn.gamecenter.ui.gamedetails.component.SupportTypeBar
 import com.kgzn.gamecenter.ui.home.component.Loading
+import com.kgzn.gamecenter.ui.web.WebRoute
 
 
 @Composable
 fun GameDetailsScreen(
-    route: GameDetailsRoute,
-    appState: GcAppState,
+    navController: NavController,
+    isOffline: Boolean,
+    onSnackbar: suspend (String) -> Unit,
 ) {
-
-    val navController = appState.navController
     val context = LocalContext.current
-    val cacheDir = context.cacheDir
-    val viewModel = viewModel {
-        GameDetailsViewModel(
-            appApi = appState.appApi,
-            param = route,
-            downloadManager = appState.downloadManager,
-            folder = cacheDir.path,
-            navController = appState.navController,
-            playRecordDao = appState.playRecordDao,
-            downloadMonitor = appState.downloadMonitor,
-            packageManager = context.packageManager,
-            installManager = appState.installManager,
-            snackbarHostState = appState.snackbarHostState,
-        )
-    }
+    val viewModel: GameDetailsViewModel = hiltViewModel()
 
     val loading by viewModel.loading.collectAsState()
     val isEmpty by viewModel.isEmpty.collectAsState()
@@ -93,9 +79,23 @@ fun GameDetailsScreen(
     val isInstallError by viewModel.isInstallError.collectAsState()
     val showGooglePlayDialog by viewModel.showGooglePlayDialog.collectAsState()
 
-    val isOffline by appState.isOffline.collectAsStateWithLifecycle()
     LaunchedEffect(isOffline) {
         viewModel.fetchInfo()
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.snackbarMessage.collect { message ->
+            onSnackbar(message)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.navigationEvent.collect { event ->
+            when (event) {
+                is NavigationEvent.NavigateToWeb -> navController.navigate(WebRoute(event.url))
+                is NavigationEvent.NavigateToGameDetails -> navController.navigate(event.route)
+            }
+        }
     }
 
     if (loading) {

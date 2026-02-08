@@ -1,11 +1,10 @@
 package com.kgzn.gamecenter.ui.gamedetails
 
 import android.net.Uri
+import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
-import androidx.navigation.toRoute
 import com.kgzn.gamecenter.data.InfoParam
-import com.kgzn.gamecenter.ui.GcAppState
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -24,13 +23,15 @@ data class GameDetailsRoute(
 }
 
 fun NavGraphBuilder.gameDetailsScreen(
-    appState: GcAppState,
+    navController: NavController,
+    isOffline: Boolean,
+    onSnackbar: suspend (String) -> Unit,
 ) {
-    composable<GameDetailsRoute> { entry ->
-        val route = entry.toRoute<GameDetailsRoute>()
+    composable<GameDetailsRoute> {
         GameDetailsScreen(
-            route = route,
-            appState = appState,
+            navController = navController,
+            isOffline = isOffline,
+            onSnackbar = onSnackbar,
         )
     }
 }

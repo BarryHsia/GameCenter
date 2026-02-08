@@ -5,17 +5,15 @@ import android.content.Intent
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.util.Log
-import androidx.compose.material3.SnackbarHostState
 import androidx.core.net.toUri
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.NavController
+import androidx.navigation.toRoute
 import com.kgzn.eventreportsdk.EventSDK
 import com.kgzn.gamecenter.R
-import com.kgzn.gamecenter.data.AppApi
 import com.kgzn.gamecenter.data.Info
-import com.kgzn.gamecenter.data.InfoParam
-import com.kgzn.gamecenter.data.local.LocalAppApiImpl
+import com.kgzn.gamecenter.data.repository.GameRepository
 import com.kgzn.gamecenter.db.playrecord.PlayRecord
 import com.kgzn.gamecenter.db.playrecord.PlayRecordDao
 import com.kgzn.gamecenter.feature.downloader.DownloadManager
@@ -29,13 +27,14 @@ import com.kgzn.gamecenter.feature.downloader.utils.combineStateFlows
 import com.kgzn.gamecenter.feature.downloader.utils.mapStateFlow
 import com.kgzn.gamecenter.feature.installer.InstallItemState
 import com.kgzn.gamecenter.feature.installer.InstallManager
-import com.kgzn.gamecenter.ui.web.WebRoute
-import kotlinx.coroutines.CoroutineScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -46,49 +45,48 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class GameDetailsViewModel(
-    private val appApi: AppApi = LocalAppApiImpl(),
-    private val param: InfoParam,
+@HiltViewModel
+class GameDetailsViewModel @Inject constructor(
+    private val gameRepository: GameRepository,
     private val downloadManager: DownloadManager,
-    private val folder: String,
-    private val navController: NavController,
     private val playRecordDao: PlayRecordDao,
     downloadMonitor: IDownloadMonitor,
-    private val packageManager: PackageManager,
     private val installManager: InstallManager,
-    private val snackbarHostState: SnackbarHostState,
+    @ApplicationContext private val appContext: Context,
+    savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
     companion object {
         private const val TAG = "GameDetailsViewModel"
-
         private const val GOOGLE_PLAY_PACKAGE_NAME = "com.android.vending"
     }
 
-    private val scope by lazy { CoroutineScope(SupervisorJob()) }
+    private val route = savedStateHandle.toRoute<GameDetailsRoute>()
+    private val param = route
+    private val folder = appContext.cacheDir.path
+    private val packageManager: PackageManager = appContext.packageManager
+
+    private val _snackbarMessage = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val snackbarMessage = _snackbarMessage.asSharedFlow()
+
+    // Navigation events
+    private val _navigationEvent = MutableSharedFlow<NavigationEvent>(extraBufferCapacity = 1)
+    val navigationEvent = _navigationEvent.asSharedFlow()
 
     private val _info = MutableStateFlow<Info?>(null)
     private val _loading = MutableStateFlow(true)
 
     val info: StateFlow<Info?> = _info
-
     val loading: StateFlow<Boolean> = _loading
-
     val isEmpty: StateFlow<Boolean> = _info.mapStateFlow { it == null }
-
     val dataId: StateFlow<String?> = _info.mapStateFlow { it?.dataId }
-
     val label: StateFlow<String> = _info.mapStateFlow { it?.title ?: "" }
-
     val desc: StateFlow<String> = _info.mapStateFlow { it?.remark ?: "" }
-
     val tags: StateFlow<List<String>> = _info.mapStateFlow { it?.tagList ?: emptyList() }
-
     val bgUrl: StateFlow<String?> = _info.mapStateFlow { it?.infoImgHUrl }
-
     val controlTypes: StateFlow<List<String>> = _info.mapStateFlow { it?.control ?: emptyList() }
-
     val relativeResources: StateFlow<List<Info>> = _info.mapStateFlow { it?.dataList ?: emptyList() }
 
     val gameType: StateFlow<GameDetailsType> = _info.mapStateFlow {
@@ -174,11 +172,10 @@ class GameDetailsViewModel(
         }
 
     val isInstalling: StateFlow<Boolean> = installState.mapStateFlow { it?.isInstalling() ?: false }
-
     val isInstallError: StateFlow<Boolean> = installState.mapStateFlow { it?.isSuccess() == false }
 
     val packageInfo: StateFlow<PackageInfo?> =
-        packageName.mapNotNull { it }.distinctUntilChanged().combine(installState) { packageName, b ->
+        packageName.mapNotNull { it }.distinctUntilChanged().combine(installState) { packageName, _ ->
             packageManager.runCatching { getPackageInfo(packageName, 0) }.getOrNull()
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
@@ -189,7 +186,7 @@ class GameDetailsViewModel(
             isInstalled && latestVersionCode != null && latestVersionCode > (packageInfo?.longVersionCode ?: 0L)
         }
 
-    val isGooglePlayInstalled: StateFlow<Boolean> = installManager.installEvents.map { events ->
+    val isGooglePlayInstalled: StateFlow<Boolean> = installManager.installEvents.map { _ ->
         packageManager.runCatching { getPackageInfo(GOOGLE_PLAY_PACKAGE_NAME, 0) }.getOrNull() != null
     }.distinctUntilChanged().stateIn(
         viewModelScope,
@@ -208,12 +205,10 @@ class GameDetailsViewModel(
 
     fun fetchInfo() {
         viewModelScope.launch {
-            appApi.getInfo(param).catch {
+            gameRepository.getInfo(param).catch {
                 Log.e(TAG, "getInfo error: ${it.message}", it)
                 _loading.value = false
-                it.localizedMessage?.let {
-                    viewModelScope.launch { snackbarHostState.showSnackbar(it) }
-                }
+                it.localizedMessage?.let { _snackbarMessage.tryEmit(it) }
             }.collect { info ->
                 _info.value = info
                 _loading.value = false
@@ -230,7 +225,7 @@ class GameDetailsViewModel(
                 || value.imgUrl.isBlank()
                 || value.title.isBlank()
             ) {
-                viewModelScope.launch { snackbarHostState.showSnackbar(context.getString(R.string.game_resource_error)) }
+                _snackbarMessage.tryEmit(context.getString(R.string.game_resource_error))
                 Log.e(TAG, "download error: $value")
                 return@launch
             }
@@ -239,12 +234,10 @@ class GameDetailsViewModel(
                 Log.w(TAG, "download error: google play is not installed")
                 return@launch
             }
-            viewModelScope.launch { snackbarHostState.showSnackbar(context.getString(R.string.downloading_tip)) }
-            appApi.getDownloadUrl(param).catch {
+            _snackbarMessage.tryEmit(context.getString(R.string.downloading_tip))
+            gameRepository.getDownloadUrl(param).catch {
                 Log.e(TAG, "getDownloadUrl error: ${it.message}", it)
-                it.localizedMessage?.let {
-                    viewModelScope.launch { snackbarHostState.showSnackbar(it) }
-                }
+                it.localizedMessage?.let { _snackbarMessage.tryEmit(it) }
             }.collect { url ->
                 val id = downloadManager.addDownload(
                     DownloadItem(
@@ -272,7 +265,7 @@ class GameDetailsViewModel(
             val value = downloadItem.value
             if (value == null) {
                 Log.e(TAG, "installApk error: $value")
-                viewModelScope.launch { snackbarHostState.showSnackbar(context.getString(R.string.game_resource_error)) }
+                _snackbarMessage.tryEmit(context.getString(R.string.game_resource_error))
                 return@launch
             }
             installManager.install(value)
@@ -288,8 +281,8 @@ class GameDetailsViewModel(
     fun resumeDownload() {
         viewModelScope.launch {
             downloadItem.value?.let { downloadItem ->
-                appApi.getDownloadUrl(downloadItem).catch {
-                    Log.e(TAG, "onCreate: getDownloadUrl error", it)
+                gameRepository.getDownloadUrl(downloadItem).catch {
+                    Log.e(TAG, "resumeDownload: getDownloadUrl error", it)
                 }.firstOrNull()?.let { url ->
                     downloadManager.updateDownloadItem(downloadItem.id) {
                         it.link = url
@@ -313,11 +306,11 @@ class GameDetailsViewModel(
         viewModelScope.launch {
             if (info?.skipPar.isNullOrBlank()) {
                 Log.e(TAG, "playH5 error: skipPar is blank")
-                viewModelScope.launch { snackbarHostState.showSnackbar(context.getString(R.string.game_resource_error)) }
+                _snackbarMessage.tryEmit(context.getString(R.string.game_resource_error))
                 return@launch
             }
             Log.i(TAG, "playH5: ${info.skipPar}")
-            navController.navigate(WebRoute(info.skipPar))
+            _navigationEvent.tryEmit(NavigationEvent.NavigateToWeb(info.skipPar))
             playRecordDao.insertRecordWithLimit(
                 record = PlayRecord(
                     dataId = info.dataId,
@@ -339,7 +332,7 @@ class GameDetailsViewModel(
         viewModelScope.launch {
             if (info?.packageName.isNullOrBlank()) {
                 Log.e(TAG, "openApp error: packageName is blank")
-                viewModelScope.launch { snackbarHostState.showSnackbar(context.getString(R.string.game_resource_error)) }
+                _snackbarMessage.tryEmit(context.getString(R.string.game_resource_error))
                 return@launch
             } else if (info.skipPar.isNullOrBlank().not()) {
                 val intent = Intent(Intent.ACTION_VIEW).apply {
@@ -348,10 +341,10 @@ class GameDetailsViewModel(
                 }
                 context.runCatching { startActivity(intent) }.onFailure {
                     Log.e(TAG, "openApp error: ${it.message}", it)
-                    val intent = context.packageManager.getLaunchIntentForPackage(info.packageName)
-                    if (intent != null) {
-                        context.runCatching { startActivity(intent) }.onFailure {
-                            viewModelScope.launch { snackbarHostState.showSnackbar(context.getString(R.string.game_resource_error)) }
+                    val launchIntent = context.packageManager.getLaunchIntentForPackage(info.packageName)
+                    if (launchIntent != null) {
+                        context.runCatching { startActivity(launchIntent) }.onFailure {
+                            _snackbarMessage.tryEmit(context.getString(R.string.game_resource_error))
                             Log.e(TAG, "openApp error: ${it.message}", it)
                         }
                     }
@@ -360,11 +353,11 @@ class GameDetailsViewModel(
                 val intent = context.packageManager.getLaunchIntentForPackage(info.packageName)
                 if (intent != null) {
                     context.runCatching { startActivity(intent) }.onFailure {
-                        viewModelScope.launch { snackbarHostState.showSnackbar(context.getString(R.string.game_resource_error)) }
+                        _snackbarMessage.tryEmit(context.getString(R.string.game_resource_error))
                         Log.e(TAG, "openApp error: ${it.message}", it)
                     }
                 } else {
-                    Log.e(TAG, "openApp error: $info.packageName not found")
+                    Log.e(TAG, "openApp error: ${info.packageName} not found")
                 }
             }
             playRecordDao.insertRecordWithLimit(
@@ -409,7 +402,11 @@ class GameDetailsViewModel(
             )
         )
     }
+}
 
+sealed interface NavigationEvent {
+    data class NavigateToWeb(val url: String) : NavigationEvent
+    data class NavigateToGameDetails(val route: GameDetailsRoute) : NavigationEvent
 }
 
 enum class GameDetailsType {

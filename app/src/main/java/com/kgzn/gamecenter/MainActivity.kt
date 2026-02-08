@@ -7,17 +7,14 @@ import android.view.KeyEvent
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.material3.SnackbarHostState
-import com.kgzn.gamecenter.data.AppApi
 import com.kgzn.gamecenter.db.playrecord.PlayRecordDao
 import com.kgzn.gamecenter.designsystem.theme.GcTheme
 import com.kgzn.gamecenter.feature.downloader.DownloadManager
 import com.kgzn.gamecenter.feature.downloader.DownloadManagerEvents
 import com.kgzn.gamecenter.feature.downloader.exception.PrepareDestinationFailedException
-import com.kgzn.gamecenter.feature.downloader.monitor.IDownloadMonitor
 import com.kgzn.gamecenter.feature.installer.InstallEvents
 import com.kgzn.gamecenter.feature.installer.InstallManager
 import com.kgzn.gamecenter.feature.network.NetworkMonitor
-import com.kgzn.gamecenter.feature.settings.SettingsManager
 import com.kgzn.gamecenter.ui.GcApp
 import com.kgzn.gamecenter.ui.gamedetails.getGameDetailsRoute
 import com.kgzn.gamecenter.ui.gamedetails.isGameDetailsUri
@@ -45,9 +42,6 @@ class MainActivity : AppCompatActivity() {
     private val scope by lazy { CoroutineScope(SupervisorJob()) }
 
     @Inject
-    lateinit var downloadMonitor: IDownloadMonitor
-
-    @Inject
     lateinit var downloadManager: DownloadManager
 
     @Inject
@@ -58,12 +52,6 @@ class MainActivity : AppCompatActivity() {
 
     @Inject
     lateinit var installManager: InstallManager
-
-    @Inject
-    lateinit var appApi: AppApi
-
-    @Inject
-    lateinit var settingsManager: SettingsManager
 
     private val snackbarHostState = SnackbarHostState()
 
@@ -93,13 +81,8 @@ class MainActivity : AppCompatActivity() {
             GcTheme {
                 GcApp(
                     appState = rememberGcAppState(
-                        appApi = appApi,
-                        downloadMonitor = downloadMonitor,
-                        downloadManager = downloadManager,
                         networkMonitor = networkMonitor,
                         playRecordDao = playRecordDao,
-                        installManager = installManager,
-                        settingsManager = settingsManager,
                         startDestination = startDestination,
                         snackbarHostState = snackbarHostState,
                     )

@@ -27,16 +27,12 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.tv.material3.Icon
 import androidx.tv.material3.Text
 import com.kgzn.gamecenter.R
-import com.kgzn.gamecenter.data.AppApi
 import com.kgzn.gamecenter.designsystem.component.GcTopAppBar
 import com.kgzn.gamecenter.designsystem.theme.GcTextStyle
-import com.kgzn.gamecenter.feature.downloader.DownloadManager
-import com.kgzn.gamecenter.feature.downloader.monitor.IDownloadMonitor
-import com.kgzn.gamecenter.feature.installer.InstallManager
 import com.kgzn.gamecenter.ui.downloader.component.DeleteDialog
 import com.kgzn.gamecenter.ui.downloader.component.EmptyBackground
 import com.kgzn.gamecenter.ui.downloader.component.UiDownloadItem
@@ -46,22 +42,9 @@ import com.kgzn.gamecenter.ui.downloader.component.UiDownloadState
 private const val TAG = "DownloaderScreen"
 
 @Composable
-fun DownloaderScreen(
-    downloadMonitor: IDownloadMonitor,
-    downloadManager: DownloadManager,
-    installManager: InstallManager,
-    appApi: AppApi,
-) {
+fun DownloaderScreen() {
 
-    val viewModel = viewModel {
-        DownloaderViewModel(
-            downloadMonitor = downloadMonitor,
-            downloadManager = downloadManager,
-            installManager = installManager,
-            appApi = appApi,
-        )
-    }
-
+    val viewModel: DownloaderViewModel = hiltViewModel()
 
     val uiDownloadItemStates by viewModel.uiDownloadStateList.collectAsState()
 

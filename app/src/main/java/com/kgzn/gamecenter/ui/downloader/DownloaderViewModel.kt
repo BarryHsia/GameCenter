@@ -3,7 +3,7 @@ package com.kgzn.gamecenter.ui.downloader
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kgzn.gamecenter.data.AppApi
+import com.kgzn.gamecenter.data.repository.GameRepository
 import com.kgzn.gamecenter.feature.downloader.DownloadManager
 import com.kgzn.gamecenter.feature.downloader.downloaditem.DownloadStatus
 import com.kgzn.gamecenter.feature.downloader.monitor.CompletedDownloadItemState
@@ -16,19 +16,22 @@ import com.kgzn.gamecenter.feature.installer.InstallItemState
 import com.kgzn.gamecenter.feature.installer.InstallManager
 import com.kgzn.gamecenter.ui.downloader.component.UiDownloadItemState
 import com.kgzn.gamecenter.ui.downloader.component.UiDownloadState
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 private const val TAG = "DownloaderViewModel"
 
-class DownloaderViewModel(
+@HiltViewModel
+class DownloaderViewModel @Inject constructor(
     downloadMonitor: IDownloadMonitor,
     val downloadManager: DownloadManager,
     val installManager: InstallManager,
-    val appApi: AppApi,
+    private val gameRepository: GameRepository,
 ) : ViewModel() {
 
     val downloadStateList: StateFlow<List<IDownloadItemState>> = downloadMonitor.downloadListFlow.mapStateFlow {
@@ -95,7 +98,7 @@ class DownloaderViewModel(
     }
 
     fun resumeDownloadItem(index: Int) {
-        appApi.getDownloadUrl(downloadStateList.value[index]).catch {
+        gameRepository.getDownloadUrl(downloadStateList.value[index]).catch {
             Log.e(TAG, "resumeDownloadItem: getDownloadUrl error", it)
         }.onEach { url ->
             downloadManager.updateDownloadItem(downloadStateList.value[index].id) {
@@ -105,12 +108,9 @@ class DownloaderViewModel(
         }.launchIn(viewModelScope)
     }
 
-
     fun pauseDownloadItem(index: Int) {
         viewModelScope.launch {
             downloadManager.pause(downloadStateList.value[index].id)
         }
     }
-
 }
-

@@ -3,34 +3,35 @@ package com.kgzn.gamecenter.ui.home
 import android.content.Context
 import android.util.Log
 import androidx.compose.foundation.pager.PagerState
-import androidx.compose.material3.SnackbarHostState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kgzn.gamecenter.R
-import com.kgzn.gamecenter.data.AppApi
 import com.kgzn.gamecenter.data.ContentConfig
-import com.kgzn.gamecenter.data.local.LocalAppApiImpl
+import com.kgzn.gamecenter.data.repository.GameRepository
 import com.kgzn.gamecenter.feature.downloader.utils.mapStateFlow
-import com.kgzn.gamecenter.ui.GcAppState
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 private data class HomeBarState(
     val pagerState: PagerState,
     val actions: List<Pair<String?, Any?>>,
 )
 
-class HomeViewModel(
-    private val appApi: AppApi = LocalAppApiImpl(),
-    appState: GcAppState,
-    private val snackbarHostState: SnackbarHostState = appState.snackbarHostState,
-    context: Context,
+@HiltViewModel
+class HomeViewModel @Inject constructor(
+    private val gameRepository: GameRepository,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
     companion object {
@@ -38,11 +39,12 @@ class HomeViewModel(
     }
 
     private val _contentConfigs = MutableStateFlow(emptyList<ContentConfig>())
-
     private val _loading = MutableStateFlow(true)
 
-    val contentConfigs: StateFlow<List<ContentConfig>> = _contentConfigs
+    private val _snackbarMessage = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val snackbarMessage = _snackbarMessage.asSharedFlow()
 
+    val contentConfigs: StateFlow<List<ContentConfig>> = _contentConfigs
     val loading: StateFlow<Boolean> = _loading
 
     private val _homeBarState =
@@ -70,15 +72,14 @@ class HomeViewModel(
 
     fun fetchContentConfigs() {
         viewModelScope.launch {
-            appApi.getAllContentConfigs().catch { e ->
+            gameRepository.getAllContentConfigs().catch { e ->
                 Log.e(TAG, "getAllContentConfigs error: ${e.localizedMessage}", e)
                 _loading.value = false
-                e.localizedMessage?.let { viewModelScope.launch { snackbarHostState.showSnackbar(it) } }
+                e.localizedMessage?.let { _snackbarMessage.tryEmit(it) }
             }.collect { contentConfigs ->
                 _loading.value = false
                 _contentConfigs.value = contentConfigs
             }
         }
     }
-
 }

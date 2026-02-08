@@ -4,7 +4,6 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.compose.composable
-import com.kgzn.gamecenter.feature.installer.InstallManager
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -14,12 +13,8 @@ fun NavController.navigateToUninstaller(navOptions: NavOptionsBuilder.() -> Unit
     navigate(UninstallerRoute, navOptions)
 }
 
-fun NavGraphBuilder.uninstallerScreen(
-    installManager: InstallManager,
-) {
+fun NavGraphBuilder.uninstallerScreen() {
     composable<UninstallerRoute> {
-        UninstallerScreen(
-            installManager = installManager,
-        )
+        UninstallerScreen()
     }
 }

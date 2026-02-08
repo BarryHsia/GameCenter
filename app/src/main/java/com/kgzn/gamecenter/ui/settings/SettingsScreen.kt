@@ -11,18 +11,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.kgzn.gamecenter.R
 import com.kgzn.gamecenter.designsystem.component.GcTopAppBar
-import com.kgzn.gamecenter.ui.GcAppState
 import com.kgzn.gamecenter.ui.settings.component.SelectPreference
-import kotlinx.coroutines.launch
 
 
 data class SelectSettings(
@@ -33,14 +31,11 @@ data class SelectSettings(
 )
 
 @Composable
-fun SettingsScreen(
-    appState: GcAppState,
-) {
+fun SettingsScreen() {
 
-    val settingsManager = appState.settingsManager
-    val isAutoInstall by settingsManager.isAutoInstall.collectAsState(true)
-    val isClearPackageAfterInstall by settingsManager.isClearPackageAfterInstall.collectAsState(true)
-    val scope = rememberCoroutineScope()
+    val viewModel: SettingsViewModel = hiltViewModel()
+    val isAutoInstall by viewModel.isAutoInstall.collectAsState()
+    val isClearPackageAfterInstall by viewModel.isClearPackageAfterInstall.collectAsState()
 
     val context = LocalContext.current
     val settings = remember {
@@ -50,21 +45,13 @@ fun SettingsScreen(
                 options = options,
                 title = context.getString(R.string.auto_install_after_download),
                 current = { if (isAutoInstall) 0 else 1 },
-                onSelectedIndexChange = {
-                    scope.launch {
-                        settingsManager.setAutoInstall(it == 0)
-                    }
-                },
+                onSelectedIndexChange = { viewModel.setAutoInstall(it == 0) },
             ),
             SelectSettings(
                 options = options,
                 title = context.getString(R.string.clear_package_after_install),
                 current = { if (isClearPackageAfterInstall) 0 else 1 },
-                onSelectedIndexChange = {
-                    scope.launch {
-                        settingsManager.setClearPackageAfterInstall(it == 0)
-                    }
-                },
+                onSelectedIndexChange = { viewModel.setClearPackageAfterInstall(it == 0) },
             ),
         )
     }
@@ -95,5 +82,4 @@ fun SettingsScreen(
 @Preview(device = "spec:width=960dp,height=540dp,dpi=320")
 @Composable
 fun SettingsScreenPreview() {
-//    SettingsScreen()
 }

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -23,9 +24,9 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.kgzn.gamecenter.R
-import com.kgzn.gamecenter.ui.GcAppState
+import com.kgzn.gamecenter.ui.LocalNavController
 import com.kgzn.gamecenter.ui.downloader.component.EmptyBackground
 import com.kgzn.gamecenter.ui.gamedetails.GameDetailsRoute
 import com.kgzn.gamecenter.ui.home.component.Loading
@@ -35,19 +36,20 @@ import com.kgzn.gamecenter.ui.search.component.SearchResultItem
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SearchScreen(
-    appState: GcAppState
+    snackbarHostState: SnackbarHostState,
 ) {
-
-    val viewModel = viewModel {
-        SearchViewModel(
-            appApi = appState.appApi,
-            snackbarHostState = appState.snackbarHostState,
-        )
-    }
+    val viewModel: SearchViewModel = hiltViewModel()
+    val navController = LocalNavController.current
 
     val results by viewModel.results.collectAsState()
     val key by viewModel.key.collectAsState()
     val loading by viewModel.loading.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.snackbarMessage.collect { message ->
+            snackbarHostState.showSnackbar(message)
+        }
+    }
 
     Box {
         Column(
@@ -92,7 +94,7 @@ fun SearchScreen(
                             imgBuilder = { search2.imgUrl },
                             onClick = {
                                 requester.saveFocusedChild()
-                                appState.navController.navigate(
+                                navController.navigate(
                                     GameDetailsRoute(
                                         configId = search2.configId,
                                         dataId = search2.dataId.toString(),
@@ -120,5 +122,4 @@ fun SearchScreen(
             )
         }
     }
-
 }

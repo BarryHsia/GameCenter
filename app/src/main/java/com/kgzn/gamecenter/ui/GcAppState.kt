@@ -11,57 +11,39 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.NavDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.kgzn.gamecenter.data.AppApi
+import com.kgzn.gamecenter.db.playrecord.PlayRecord
 import com.kgzn.gamecenter.db.playrecord.PlayRecordDao
-import com.kgzn.gamecenter.feature.downloader.DownloadManager
-import com.kgzn.gamecenter.feature.downloader.monitor.IDownloadMonitor
-import com.kgzn.gamecenter.feature.installer.InstallManager
 import com.kgzn.gamecenter.feature.network.NetworkMonitor
-import com.kgzn.gamecenter.feature.settings.SettingsManager
 import com.kgzn.gamecenter.ui.home.HomeRoute
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 @Composable
 fun rememberGcAppState(
-    appApi: AppApi,
     navController: NavHostController = rememberNavController(),
-    downloadMonitor: IDownloadMonitor,
-    downloadManager: DownloadManager,
     networkMonitor: NetworkMonitor,
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
     playRecordDao: PlayRecordDao,
-    installManager: InstallManager,
-    settingsManager: SettingsManager,
     startDestination: Any = HomeRoute,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ): GcAppState {
     return remember(
-        appApi,
         navController,
-        downloadMonitor,
-        downloadManager,
         networkMonitor,
         coroutineScope,
         playRecordDao,
-        installManager,
-        settingsManager,
         startDestination,
     ) {
         GcAppState(
-            appApi,
-            navController,
-            downloadMonitor,
-            downloadManager,
-            networkMonitor,
-            coroutineScope,
-            playRecordDao,
-            installManager,
-            settingsManager,
-            startDestination,
-            snackbarHostState,
+            navController = navController,
+            networkMonitor = networkMonitor,
+            coroutineScope = coroutineScope,
+            playRecordDao = playRecordDao,
+            startDestination = startDestination,
+            snackbarHostState = snackbarHostState,
         )
     }
 }
@@ -72,15 +54,10 @@ val LocalGcAppState = compositionLocalOf<GcAppState> {
 
 @Stable
 class GcAppState(
-    val appApi: AppApi,
     val navController: NavHostController,
-    val downloadMonitor: IDownloadMonitor,
-    val downloadManager: DownloadManager,
     networkMonitor: NetworkMonitor,
     coroutineScope: CoroutineScope,
-    val playRecordDao: PlayRecordDao,
-    val installManager: InstallManager,
-    val settingsManager: SettingsManager,
+    playRecordDao: PlayRecordDao,
     val startDestination: Any,
     val snackbarHostState: SnackbarHostState,
 ) {
@@ -88,11 +65,8 @@ class GcAppState(
 
     val currentDestination: NavDestination?
         @Composable get() {
-            // Collect the currentBackStackEntryFlow as a state
             val currentEntry = navController.currentBackStackEntryFlow
                 .collectAsState(initial = null)
-
-            // Fallback to previousDestination if currentEntry is null
             return currentEntry.value?.destination.also { destination ->
                 if (destination != null) {
                     previousDestination.value = destination
@@ -100,7 +74,7 @@ class GcAppState(
             } ?: previousDestination.value
         }
 
-    val isOffline = networkMonitor.isOnline
+    val isOffline: StateFlow<Boolean> = networkMonitor.isOnline
         .map(Boolean::not)
         .stateIn(
             scope = coroutineScope,
@@ -108,14 +82,14 @@ class GcAppState(
             initialValue = false,
         )
 
-    val isOnline = networkMonitor.isOnline
+    val isOnline: StateFlow<Boolean> = networkMonitor.isOnline
         .stateIn(
             scope = coroutineScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = false,
         )
 
-    val playRecords = playRecordDao.getAllByLastPlayTimeDesc()
+    val playRecords: StateFlow<List<PlayRecord>> = playRecordDao.getAllByLastPlayTimeDesc()
         .stateIn(
             scope = coroutineScope,
             started = SharingStarted.WhileSubscribed(5_000),

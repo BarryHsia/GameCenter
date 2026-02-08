@@ -12,7 +12,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -23,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -44,7 +44,6 @@ import com.kgzn.gamecenter.ui.uninstaller.uninstallerScreen
 import com.kgzn.gamecenter.ui.web.webScreen
 
 private const val TAG = "GcApp"
-
 
 @Composable
 fun GcApp(
@@ -106,7 +105,6 @@ fun GcApp(
         }
     }
 
-
     if (showExitDialog) {
         ConfirmDialog(
             title = stringResource(R.string.exit),
@@ -119,28 +117,28 @@ fun GcApp(
     }
 }
 
-
 @Composable
 fun GcNavHost(
     appState: GcAppState,
     modifier: Modifier = Modifier,
 ) {
     val navController = appState.navController
+    val isOffline by appState.isOffline.collectAsStateWithLifecycle()
+
     NavHost(navController = navController, startDestination = appState.startDestination, modifier = modifier) {
         homeScreen(appState = appState)
-        downloaderScreen(
-            downloadMonitor = appState.downloadMonitor,
-            downloadManager = appState.downloadManager,
-            installManager = appState.installManager,
-            appApi = appState.appApi,
-        )
-        uninstallerScreen(installManager = appState.installManager)
+        downloaderScreen()
+        uninstallerScreen()
         aboutScreen()
-        searchScreen(appState = appState)
+        searchScreen(snackbarHostState = appState.snackbarHostState)
         inputScreen()
-        gameDetailsScreen(appState = appState)
-        webScreen(appState = appState)
-        settingsScreen(appState = appState)
+        gameDetailsScreen(
+            navController = navController,
+            isOffline = isOffline,
+            onSnackbar = { appState.snackbarHostState.showSnackbar(it) },
+        )
+        webScreen(navController = navController)
+        settingsScreen()
     }
 }
 

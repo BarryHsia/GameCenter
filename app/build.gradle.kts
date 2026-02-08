@@ -97,6 +97,8 @@ dependencies {
     implementation(libs.retrofit)
     // https://mvnrepository.com/artifact/com.squareup.retrofit2/converter-gson
     implementation(libs.converter.gson)
+    // https://mvnrepository.com/artifact/com.squareup.retrofit2/converter-kotlinx-serialization
+    implementation(libs.retrofit.kotlinx.serialization)
     // https://mvnrepository.com/artifact/io.coil-kt.coil3/coil
     implementation(libs.coil)
     // https://mvnrepository.com/artifact/io.coil-kt.coil3/coil-compose
@@ -152,6 +154,8 @@ dependencies {
     implementation(libs.hilt.android)
     // https://mvnrepository.com/artifact/com.google.dagger/hilt-android-compiler
     ksp(libs.hilt.android.compiler)
+    // https://mvnrepository.com/artifact/androidx.hilt/hilt-navigation-compose
+    implementation(libs.hilt.navigation.compose)
     // https://mvnrepository.com/artifact/androidx.tracing/tracing
     implementation(libs.androidx.tracing)
 
