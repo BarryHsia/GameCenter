@@ -1,23 +1,42 @@
 package com.kgzn.gamecenter.uitls
 
-import android.app.ActivityThread
+import android.app.Application
 import android.content.pm.PackageManager
-import android.os.SystemProperties
 import com.kgzn.gamecenter.BuildConfig
 import java.net.NetworkInterface
 import java.util.Locale
 
 object AppUtils {
 
+    private fun getCurrentApplication(): Application? {
+        return try {
+            val clazz = Class.forName("android.app.ActivityThread")
+            val method = clazz.getMethod("currentApplication")
+            method.invoke(null) as? Application
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    private fun getSystemProperty(key: String, defaultValue: String): String {
+        return try {
+            val clazz = Class.forName("android.os.SystemProperties")
+            val method = clazz.getMethod("get", String::class.java, String::class.java)
+            method.invoke(null, key, defaultValue) as? String ?: defaultValue
+        } catch (e: Exception) {
+            defaultValue
+        }
+    }
+
     fun getAppId(): String {
-        val packageManager = ActivityThread.currentApplication().packageManager
+        val app = getCurrentApplication() ?: return "tv001"
         val applicationInfo =
-            packageManager?.getApplicationInfo(BuildConfig.APPLICATION_ID, PackageManager.GET_META_DATA)
+            app.packageManager?.getApplicationInfo(BuildConfig.APPLICATION_ID, PackageManager.GET_META_DATA)
         return applicationInfo?.metaData?.getString("ProductAppID", null) ?: "tv001"
     }
 
     fun getLanguage(): String {
-        val locale = Locale.getDefault() // zh_CN
+        val locale = Locale.getDefault()
         return when (locale.language) {
             "zh" -> if ("CN" == locale.country) {
                 locale.language + "-r" + locale.country
@@ -39,15 +58,15 @@ object AppUtils {
     }
 
     fun getCustomer(): String {
-        return SystemProperties.get("kgzn.ota.customer", "test1")
+        return getSystemProperty("kgzn.ota.customer", "test1")
     }
 
     fun getModel(): String {
-        return SystemProperties.get("kgzn.ota.model", "3588")
+        return getSystemProperty("kgzn.ota.model", "3588")
     }
 
     fun getType(): String {
-        return SystemProperties.get("kgzn.ota.type", "TV_MTK9653_AN14_Neutral")
+        return getSystemProperty("kgzn.ota.type", "TV_MTK9653_AN14_Neutral")
     }
 
     fun getMac(): String {
@@ -59,11 +78,11 @@ object AppUtils {
     }
 
     fun getSda(): String {
-        return SystemProperties.get("ro.product.sda", "65966")
+        return getSystemProperty("ro.product.sda", "65966")
     }
 
     fun getRegion(): String {
-        return SystemProperties.get("persist.sys.kgzn.country", "CN")
+        return getSystemProperty("persist.sys.kgzn.country", "CN")
     }
 
 }

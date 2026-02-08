@@ -103,7 +103,7 @@ class MainActivity : AppCompatActivity() {
             && event.repeatCount == 0
             && cacheEvents != event
         ) {
-            cacheEvents = event.copy()
+            cacheEvents = KeyEvent(event)
             return true
         }
         return super.dispatchKeyEvent(event)

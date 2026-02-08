@@ -123,7 +123,7 @@ fun InputScreen() {
                 modifier = Modifier,
                 devices = inputViewModel.devices,
                 onDeviceClick = { device ->
-                    if (device?.bluetoothAddress != null) {
+                    if (device != null && device.getBluetoothAddressCompat() != null) {
                         inputViewModel.disconnectDevice(device.id)
                     }
                 }
@@ -286,7 +286,7 @@ private fun ManagePage(
         ) {
             repeat(4) { index ->
                 val device = devices.getOrNull(index)
-                val isBluetoothDevice = device?.bluetoothAddress != null
+                val isBluetoothDevice = device?.getBluetoothAddressCompat() != null
                 InputDeviceItem(
                     iconId = if (device != null) R.drawable.ic_gamepads else R.drawable.ic_mine,
                     iconColor = if (device?.isEnabled == true) Color(0xFF1B77F7) else Color.White,
@@ -401,5 +401,14 @@ private fun InputDeviceItem(
                 )
             }
         }
+    }
+}
+
+private fun InputDevice.getBluetoothAddressCompat(): String? {
+    return try {
+        val method = javaClass.getMethod("getBluetoothAddress")
+        method.invoke(this) as? String
+    } catch (e: Exception) {
+        null
     }
 }

@@ -62,9 +62,20 @@ class InputViewModel(context: Context) : ViewModel() {
     }
 
     fun disconnectDevice(deviceId: Int) {
-        val bluetoothAddress = mInputManager.getInputDevice(deviceId)?.bluetoothAddress
+        val device = mInputManager.getInputDevice(deviceId) ?: return
+        val bluetoothAddress = try {
+            val method = device.javaClass.getMethod("getBluetoothAddress")
+            method.invoke(device) as? String
+        } catch (e: Exception) {
+            null
+        }
         if (bluetoothAddress != null) {
-            mBluetoothManager.adapter?.getRemoteDevice(bluetoothAddress)?.disconnect()
+            try {
+                val remoteDevice = mBluetoothManager.adapter?.getRemoteDevice(bluetoothAddress)
+                remoteDevice?.javaClass?.getMethod("disconnect")?.invoke(remoteDevice)
+            } catch (e: Exception) {
+                Log.e(TAG, "disconnectDevice failed", e)
+            }
         }
     }
 }
