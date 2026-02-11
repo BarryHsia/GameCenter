@@ -24,6 +24,14 @@ android {
         versionName = "$tag-$hash"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        
+        // 从 local.properties 读取密钥
+        val properties = java.util.Properties()
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            properties.load(java.io.FileInputStream(localPropertiesFile))
+        }
+        buildConfigField("String", "SECRET_KEY", "\"${properties.getProperty("SECRET_KEY", "")}\"")
     }
 
     signingConfigs {
@@ -46,7 +54,8 @@ android {
             signingConfig = signingConfigs.getByName("MT9633")
         }
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.getByName("MT9633")
         }

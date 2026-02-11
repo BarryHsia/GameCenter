@@ -1,0 +1,6 @@
+# local.properties.example
+# 复制此文件为 local.properties 并填入实际值
+# local.properties 不会提交到 Git
+
+# API 密钥
+SECRET_KEY=a4ff9083802144edb96dc6f38cdb6330

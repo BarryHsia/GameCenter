@@ -1,14 +1,11 @@
 package com.kgzn.gamecenter.data.remote.request
 
+import com.kgzn.gamecenter.BuildConfig
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
 import java.security.MessageDigest
 
 interface Token {
-
-    companion object {
-        private const val SECRET_KEY = "a4ff9083802144edb96dc6f38cdb6330"
-    }
 
     val token: String
 
@@ -26,7 +23,7 @@ interface Token {
             field.isAccessible = true
             field[this]?.let { "${field.name}=$it" } ?: ""
         }.filter { it.isNotBlank() }.joinToString("&").let {
-            calculateMd5(it + SECRET_KEY)
+            calculateMd5(it + BuildConfig.SECRET_KEY)
         }
     }
 
