@@ -1,0 +1,15 @@
+{
+  "enabled": true,
+  "name": "Code Quality Review",
+  "description": "After a successful APK build, analyzes modified source code files for potential improvements including code smells, design patterns, and best practices.",
+  "version": "1",
+  "when": {
+    "type": "agentStop"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Check if during this conversation you executed a Gradle assembleDebug or assembleRelease build that completed with BUILD SUCCESSFUL. If no successful APK build happened, do nothing.\n\nIf a successful APK build DID happen, analyze the recently modified source code files (*.kt, *.java, *.xml) for potential improvements. Focus on:\n\n1. Code smells (long methods, duplicated logic, magic numbers, excessive parameters, deep nesting)\n2. Design pattern opportunities (where applying a pattern would simplify or improve the code)\n3. Best practices (proper error handling, null safety, resource management, naming conventions)\n4. Readability (clear naming, appropriate comments, logical structure)\n5. Maintainability (single responsibility, loose coupling, proper abstractions)\n6. Performance optimizations (unnecessary allocations, inefficient collections usage, redundant computations)\n\nFor each finding, provide:\n- A brief description of the issue\n- Why it matters\n- A concrete suggestion for improvement\n\nKeep suggestions practical and focused. Do not suggest changes that would alter the existing functionality. Prioritize the most impactful improvements."
+  },
+  "workspaceFolderName": "AllinOsGameCenter",
+  "shortName": "code-quality-review"
+}

@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Build Debug APK",
+  "description": "One-click build debug APK using Gradle.",
+  "version": "1",
+  "when": {
+    "type": "userTriggered"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Run the command: .\\gradlew.bat assembleDebug --no-daemon and report the result. Do not read any files or do any analysis, just run the build command and tell me if it succeeded or failed."
+  }
+}
