@@ -7,8 +7,14 @@ import android.util.Log
 import android.view.InputDevice
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 
-class InputViewModel(context: Context) : ViewModel() {
+@HiltViewModel
+class InputViewModel @Inject constructor(
+    @ApplicationContext context: Context
+) : ViewModel() {
 
     companion object {
         const val TAG = "InputViewModel"
