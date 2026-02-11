@@ -27,8 +27,8 @@ import com.kgzn.gamecenter.feature.downloader.utils.combineStateFlows
 import com.kgzn.gamecenter.feature.downloader.utils.mapStateFlow
 import com.kgzn.gamecenter.feature.installer.InstallItemState
 import com.kgzn.gamecenter.feature.installer.InstallManager
+import com.kgzn.gamecenter.utils.AppResourceProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -54,7 +54,7 @@ class GameDetailsViewModel @Inject constructor(
     private val playRecordDao: PlayRecordDao,
     downloadMonitor: IDownloadMonitor,
     private val installManager: InstallManager,
-    @ApplicationContext private val appContext: Context,
+    private val appResourceProvider: AppResourceProvider,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -65,8 +65,6 @@ class GameDetailsViewModel @Inject constructor(
 
     private val route = savedStateHandle.toRoute<GameDetailsRoute>()
     private val param = route
-    private val folder = appContext.cacheDir.path
-    private val packageManager: PackageManager = appContext.packageManager
 
     private val _snackbarMessage = MutableSharedFlow<String>(extraBufferCapacity = 1)
     val snackbarMessage = _snackbarMessage.asSharedFlow()
@@ -176,7 +174,7 @@ class GameDetailsViewModel @Inject constructor(
 
     val packageInfo: StateFlow<PackageInfo?> =
         packageName.mapNotNull { it }.distinctUntilChanged().combine(installState) { packageName, _ ->
-            packageManager.runCatching { getPackageInfo(packageName, 0) }.getOrNull()
+            appResourceProvider.getPackageInfo(packageName)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
     val isInstalled: StateFlow<Boolean> = packageInfo.mapStateFlow { it != null }
@@ -187,11 +185,11 @@ class GameDetailsViewModel @Inject constructor(
         }
 
     val isGooglePlayInstalled: StateFlow<Boolean> = installManager.installEvents.map { _ ->
-        packageManager.runCatching { getPackageInfo(GOOGLE_PLAY_PACKAGE_NAME, 0) }.getOrNull() != null
+        appResourceProvider.isPackageInstalled(GOOGLE_PLAY_PACKAGE_NAME)
     }.distinctUntilChanged().stateIn(
         viewModelScope,
         SharingStarted.Lazily,
-        packageManager.runCatching { getPackageInfo(GOOGLE_PLAY_PACKAGE_NAME, 0) }.getOrNull() != null
+        appResourceProvider.isPackageInstalled(GOOGLE_PLAY_PACKAGE_NAME)
     )
 
     val isNeedGooglePlay: StateFlow<Boolean> = _info.mapStateFlow { it?.requireGoogleplay == true }
@@ -244,7 +242,7 @@ class GameDetailsViewModel @Inject constructor(
                         id = 0,
                         link = url,
                         name = "${value.packageName}_${value.versionCode}.apk",
-                        folder = folder,
+                        folder = appResourceProvider.cacheDir,
                         label = value.title,
                         imgUrl = value.imgUrl,
                         configId = value.configId,

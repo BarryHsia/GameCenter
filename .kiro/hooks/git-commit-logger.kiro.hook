@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Git Commit Logger",
+  "description": "每次 agent 完成任务后，检查是否有新的 git commit，如果有则自动记录到开发履历",
+  "version": "1",
+  "when": {
+    "type": "agentStop"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "检查最近的 git commit (git log -1)，如果有新提交且不在 docs/CHANGELOG.md 中，则以简洁格式追加记录：日期、commit hash、功能/修复描述（中文，一句话概括）。格式：## YYYY-MM-DD HH:MM | hash | 描述"
+  }
+}
