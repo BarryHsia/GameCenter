@@ -4,6 +4,8 @@
 
 ---
 
+## 2026-02-11 19:35 | 982d772 | 重构：为 InputViewModel 添加 Hilt 支持
+
 ## 2026-02-11 19:30 | 9dba878 | 重构：移除 GameDetailsViewModel 中的 Context 依赖
 
 ## 2026-02-11 17:38 | 06a31fb | 添加安全修复文档
