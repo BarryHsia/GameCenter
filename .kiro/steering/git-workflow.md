@@ -6,7 +6,7 @@ inclusion: always
 
 ## 核心规则
 
-**代码修改必须同时更新 CHANGELOG.md，一次提交**
+**代码修改必须同时更新 CHANGELOG.md**
 
 ### 何时更新 CHANGELOG
 
@@ -17,7 +17,6 @@ inclusion: always
 
 1. 修改代码
 2. 更新 `docs/CHANGELOG.md`（在 `---` 后添加条目）
-3. 使用 `git commit` 或 `mcp_github_push_files` 同时推送
 
 ## CHANGELOG 格式
 
@@ -74,7 +73,7 @@ inclusion: always
 
 ## 工作流检查清单
 
-提交前必须检查：
+修改代码时必须检查：
 
 - [ ] 代码修改已完成
 - [ ] CHANGELOG.md 已更新
@@ -83,4 +82,3 @@ inclusion: always
 - [ ] 时间戳准确（YYYY-MM-DD HH:MM 格式）
 - [ ] 描述简洁（不超过30字）
 - [ ] 条目间有空行分隔
-- [ ] 代码和 CHANGELOG 在同一次提交中
