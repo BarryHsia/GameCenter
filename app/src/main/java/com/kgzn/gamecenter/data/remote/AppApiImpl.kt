@@ -3,6 +3,7 @@ package com.kgzn.gamecenter.data.remote
 import android.content.Context
 import android.util.Log
 import com.google.gson.GsonBuilder
+import com.kgzn.gamecenter.BuildConfig
 import com.kgzn.gamecenter.data.AppApi
 import com.kgzn.gamecenter.data.ContentConfig
 import com.kgzn.gamecenter.data.Info
@@ -12,16 +13,22 @@ import com.kgzn.gamecenter.data.remote.interceptor.RetryInterceptor
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import okhttp3.Cache
+import okhttp3.ConnectionSpec
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
 class AppApiImpl(private val context: Context) : AppApi {
 
     companion object {
         private const val TAG = "ContentConfigsRepositoryImpl"
-        const val BASE_URL = "http://appstore.intelligen.ltd:8084"
+        const val BASE_URL = "https://appstore.intelligen.ltd:8084"
         const val CACHE_SIZE = 1024 * 1024 * 10L
+        private const val CONNECT_TIMEOUT_SECONDS = 30L
+        private const val READ_TIMEOUT_SECONDS = 30L
+        private const val WRITE_TIMEOUT_SECONDS = 30L
     }
 
     private val apiService: ApiService by lazy {
@@ -30,7 +37,14 @@ class AppApiImpl(private val context: Context) : AppApi {
         }
         val cache = Cache(cacheFile, CACHE_SIZE)
         val client = OkHttpClient.Builder()
+            .connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .readTimeout(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .writeTimeout(WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .addInterceptor(RetryInterceptor(3, 0))
+            .addInterceptor(HttpLoggingInterceptor().apply {
+                level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY else HttpLoggingInterceptor.Level.NONE
+            })
+            .connectionSpecs(listOf(ConnectionSpec.MODERN_TLS))
             .cache(cache)
             .build()
         Retrofit.Builder()
@@ -43,7 +57,9 @@ class AppApiImpl(private val context: Context) : AppApi {
 
     override fun getAllContentConfigs(): Flow<List<ContentConfig>> = flow {
         val response = apiService.getContentConfig(
-            GetContentConfigRequest().also { Log.d(TAG, "getAllContentConfigs: $it") }
+            GetContentConfigRequest().also { 
+                if (BuildConfig.DEBUG) Log.d(TAG, "getAllContentConfigs request sent")
+            }
         )
         Log.d(TAG, "getAllContentConfigs: { code: ${response.code}, msg: ${response.msg} }")
         if (response.code == 0) {
@@ -69,7 +85,7 @@ class AppApiImpl(private val context: Context) : AppApi {
                 contentType = param.contentType,
                 dataType = param.dataType,
             ).also {
-                Log.d(TAG, "getInfo: $it")
+                if (BuildConfig.DEBUG) Log.d(TAG, "getInfo request sent")
             }
         )
         Log.d(TAG, "getInfo: { code: ${response.code}, msg: ${response.msg} }")
@@ -83,7 +99,7 @@ class AppApiImpl(private val context: Context) : AppApi {
     override fun search2(key: String): Flow<List<Search2>> = flow {
         val response = apiService.search2(
             Search2Parameter(key = key).also {
-                Log.d(TAG, "search2: $it")
+                if (BuildConfig.DEBUG) Log.d(TAG, "search2 request sent for key: $key")
             }
         )
         Log.d(TAG, "search2: { code: ${response.code}, msg: ${response.msg} }")
@@ -101,10 +117,10 @@ class AppApiImpl(private val context: Context) : AppApi {
                 contentType = param.contentType,
                 dataType = param.dataType,
             ).also {
-                Log.d(TAG, "getDownloadUrl: $it")
+                if (BuildConfig.DEBUG) Log.d(TAG, "getDownloadUrl request sent")
             }
         )
-        Log.d(TAG, "getDownloadUrl: $response")
+        Log.d(TAG, "getDownloadUrl: { code: ${response.code}, msg: ${response.msg} }")
         if (response.code == 0) {
             emit(response.data.orEmpty())
         } else {
