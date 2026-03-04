@@ -12,25 +12,27 @@ inclusion: manual
 
 | 文件 | 加载方式 | 大小 | 用途 |
 |------|---------|------|------|
-| code-conventions.md | 始终加载 | ~3KB | 核心编码规范 + 架构规范 |
-| security-policies.md | 始终加载 | ~2KB | 安全规范 |
-| api-standards.md | 编辑 data 层时 | ~3KB | 网络层规范 |
-| testing-standards.md | 编辑测试时 | ~3KB | 测试规范 |
-| deployment-workflow.md | 手动引用 | ~2KB | 构建发布流程 |
+| kotlin-code-style.md | 始终加载 | ~3KB | Kotlin 编码风格 + 架构规范 |
+| android-security.md | 始终加载 | ~2KB | Android 安全规范 |
+| git-commit-rules.md | 始终加载 | ~2KB | Git 提交规则 + CHANGELOG 格式 |
+| network-api-guide.md | 编辑 data 层时 | ~3KB | 网络 API 层规范 |
+| testing-guide.md | 编辑测试时 | ~3KB | 测试规范 |
+| release-deploy.md | 手动引用 | ~2KB | 构建发布流程 |
 
 ## 加载策略
 
 ### 始终加载 (Always)
-- `code-conventions.md` - 核心规范，保持精简
-- `security-policies.md` - 安全规范，必须遵守
+- `kotlin-code-style.md` - Kotlin 编码风格，保持精简
+- `android-security.md` - 安全规范，必须遵守
+- `git-commit-rules.md` - Git 提交规则
 
 ### 按需加载 (FileMatch)
-- `api-standards.md` - 编辑 `**/data/**` 时自动加载
-- `testing-standards.md` - 编辑 `**/test/**` 时自动加载
+- `network-api-guide.md` - 编辑 `**/data/**` 时自动加载
+- `testing-guide.md` - 编辑 `**/test/**` 时自动加载
 
 ### 手动引用 (Manual)
-- `deployment-workflow.md` - 需要时用 `#deployment-workflow` 引用
-- `README.md` - 本文件，仅供人类阅读
+- `release-deploy.md` - 需要时用 `#release-deploy` 引用
+- `STEERING_README.md` - 本文件，仅供人类阅读
 
 ## 优化说明
 
@@ -49,15 +51,15 @@ inclusion: manual
 
 ### 自动加载
 编辑代码时自动加载相应规范：
-- 编辑 `UserRepository.kt` → 自动加载 `api-standards.md`
-- 编辑 `UserViewModelTest.kt` → 自动加载 `testing-standards.md`
+- 编辑 `UserRepository.kt` → 自动加载 `network-api-guide.md`
+- 编辑 `UserViewModelTest.kt` → 自动加载 `testing-guide.md`
 
 ### 手动引用
 在对话中使用 `#` 引用：
 ```
-#deployment-workflow  # 查看构建发布流程
-#api-standards        # 查看完整 API 规范
-#testing-standards    # 查看完整测试规范
+#release-deploy       # 查看构建发布流程
+#network-api-guide    # 查看完整 API 规范
+#testing-guide        # 查看完整测试规范
 ```
 
 ## 完整文档
