@@ -1,0 +1,13 @@
+{
+  "name": "ProGuard Reminder",
+  "version": "1.0.0",
+  "description": "新增文件时提醒检查是否需要更新混淆规则",
+  "when": {
+    "type": "fileCreated",
+    "patterns": ["**/*.kt"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "刚创建了一个新的 Kotlin 文件，请检查该文件是否使用了反射、序列化（Gson/Moshi/Kotlinx.Serialization）、或 JNI。如果使用了这些特性，提醒需要在 proguard-rules.pro 中添加 keep 规则。如果不涉及，不要输出任何内容。"
+  }
+}

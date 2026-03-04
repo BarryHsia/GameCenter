@@ -1,0 +1,13 @@
+{
+  "name": "XML Resource Check",
+  "version": "1.0.0",
+  "description": "编辑 XML 文件时检查资源引用和命名规范",
+  "when": {
+    "type": "fileEdited",
+    "patterns": ["**/res/**/*.xml", "**/AndroidManifest.xml"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "刚编辑了一个 XML 资源文件，请检查：1) 资源引用是否存在（@string、@drawable、@color 等）2) 命名是否符合 snake_case 规范 3) AndroidManifest 中组件的 exported 属性是否正确设置。如果没有问题，不要输出任何内容。"
+  }
+}

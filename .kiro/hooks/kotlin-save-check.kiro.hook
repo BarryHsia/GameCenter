@@ -1,0 +1,13 @@
+{
+  "name": "Kotlin Save Check",
+  "version": "1.0.0",
+  "description": "保存 Kotlin 文件时自动检查编译错误和代码规范",
+  "when": {
+    "type": "fileEdited",
+    "patterns": ["**/*.kt"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "刚保存了一个 Kotlin 文件，请用 getDiagnostics 检查该文件是否有编译错误或类型错误。如果有问题，简要说明并给出修复建议。如果没有问题，不要输出任何内容。"
+  }
+}

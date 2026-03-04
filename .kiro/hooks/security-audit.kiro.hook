@@ -1,0 +1,13 @@
+{
+  "name": "Security Audit",
+  "version": "1.0.0",
+  "description": "编辑 data 层代码时自动进行安全审查",
+  "when": {
+    "type": "fileEdited",
+    "patterns": ["**/data/**/*.kt", "**/remote/**/*.kt", "**/local/**/*.kt"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "刚编辑了数据层代码，请进行安全审查：1) 是否有硬编码的密钥、Token 或 URL 2) 日志中是否包含敏感信息（Token、密码等）3) SharedPreferences 是否使用了加密存储 4) 网络请求是否强制 HTTPS。只报告发现的安全问题，如果没有问题，不要输出任何内容。"
+  }
+}

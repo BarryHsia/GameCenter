@@ -1,0 +1,13 @@
+{
+  "name": "Gradle Dependency Check",
+  "version": "1.0.0",
+  "description": "编辑 Gradle 或版本目录文件时提醒依赖兼容性检查",
+  "when": {
+    "type": "fileEdited",
+    "patterns": ["**/*.gradle.kts", "**/libs.versions.toml"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "刚编辑了 Gradle 构建文件或版本目录，请检查：1) 新增/修改的依赖版本是否与现有依赖兼容 2) 是否有重复依赖 3) 版本号是否统一在 libs.versions.toml 中管理。如果没有问题，不要输出任何内容。"
+  }
+}
