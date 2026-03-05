@@ -55,7 +55,8 @@ inclusion: manual
 
 ## 其他文件
 
-| 文件 | 用途 |
-|------|------|
-| SKILLS_README.md | Kiro Skills 功能扩展说明 |
-| STEERING_SPEC_README.md | 本文件，规范文件索引 |
+| 文件 | 位置 | 用途 |
+|------|------|------|
+| SKILLS_README.md | `.kiro/skills/` | Kiro Skills 功能扩展说明 |
+| STEERING_SPEC_README.md | `.kiro/steering/` | 本文件，规范文件索引 |
+| HOOKS_README.md | `.kiro/hooks/` | Agent Hooks 说明 |

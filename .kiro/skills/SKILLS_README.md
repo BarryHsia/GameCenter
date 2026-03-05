@@ -1,7 +1,3 @@
----
-inclusion: manual
----
-
 # Kiro Skills 使用指南
 
 Skills 是 Kiro 的专业能力扩展包，提供特定领域的功能和工具。
